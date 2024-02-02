@@ -2,6 +2,7 @@
 #' @description Runs a number of checks and commits data product changes
 #' @param project_path Path to the project folder (default is working directory)
 #' @param commit_description Commit message
+#' @param type File type used to save ‘x’ to disk. Must be one of "rds", or "qs" (default is "rds")
 #' @return repo object post commit
 #' @examples \dontrun{
 #' dp_commit(commit_description = "First dp commit")
@@ -15,7 +16,9 @@ dp_commit <- function(project_path = fs::path_wd(),
 
   project_path <- fs::path_tidy(project_path)
   log_path <- fs::path_tidy(glue::glue("{project_path}/.daap/daap_log.yaml"))
-  RDS_path <- fs::path_tidy(glue::glue("{project_path}/output_files/RDS_format/data_object.RDS"))
+
+  format <- ifelse(type == 'qs', 'qs_format', 'RDS_format')
+  RDS_path <- glue::glue("{project_path}/output_files/{format}/data_object.{format}")
 
   if (!fs::dir_exists(project_path)) {
     stop("project_path does not exist")
@@ -33,7 +36,7 @@ dp_commit <- function(project_path = fs::path_wd(),
 
 
   if (!file.exists(RDS_path)) {
-    stop("data_object.RDS was not found. First, complete dp_write")
+    stop("data_object was not found. First, complete dp_write")
   }
   rds_file_sha1 <- digest::digest(object = RDS_path, algo = "sha1", file = T)
 

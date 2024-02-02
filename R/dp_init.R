@@ -79,7 +79,7 @@ dp_init <- function(project_path = fs::path_wd(),
                       ".drake/", "_targets/", "input_files/",
                       "output_files/", ".Rprofile", ".Renviron",
                       ".Rhistory", ".Rproj.user", ".Rproj.user/",
-                      ".DS_Store", "*.csv", "*.tsv", "*.rds",
+                      ".DS_Store", "*.csv", "*.tsv", "*.rds", "*.qs",
                       "*.txt", "*.parquet", "*.sas7bdat"
                     ),
                     ...) {

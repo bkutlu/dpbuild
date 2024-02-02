@@ -2,9 +2,10 @@
 #' @description This function writes the data product and logs it in `.daap/daap_log.yaml`
 #' @param data_object data_object generated from `dp_structure`
 #' @param project_path path to the project (default is current directory)
+#' @param type File type used to save ‘x’ to disk. Must be one of "rds", or "qs" (default is "rds")
 #' @return TRUE
 #' @export
-dp_write <- function(data_object, project_path = ".") {
+dp_write <- function(data_object, project_path = ".", type = "rds") {
   if (!is_valid_dp_repository(path = project_path)) {
     stop(glue::glue(
       "Not a dp repsitory. ",
@@ -21,20 +22,20 @@ dp_write <- function(data_object, project_path = ".") {
     )))
   }
 
-  # Store the output
-  if (!dir.exists(paths = glue::glue("{project_path}/output_files/RDS_format"))) {
-    dir.create(
-      path = glue::glue("{project_path}/output_files/RDS_format"),
-      recursive = T
-    )
+  format <- ifelse(type == 'qs', 'qs_format', 'RDS_format')
+  dataobj_path <- glue::glue("{project_path}/output_files/{format}/data_object.{format}")
+  
+  if (!dir.exists(paths = dataobj_path)) {
+    dir.create(path = dataobj_path, recursive = TRUE)
   }
 
-  dataobj_path <- glue::glue(
-    "{project_path}/",
-    "output_files/RDS_format/data_object.RDS"
-  )
-  saveRDS(object = data_object, file = dataobj_path, version = 2)
-  data_object <- readRDS(file = dataobj_path)
+  if (format == 'qs_format') {
+    qs::qsave(object = data_object, file = dataobj_path, version = 2)
+    data_object <- qs::qread(file = dataobj_path)
+  } else {
+    saveRDS(object = data_object, file = dataobj_path, version = 2)
+    data_object <- readRDS(file = dataobj_path)
+  }
 
   log_note <- dplognote_get(
     data_object = data_object,
@@ -72,13 +73,14 @@ dp_write <- function(data_object, project_path = ".") {
 #' @description This builds log note
 #' @param data_object data_object
 #' @param project_path path to the project
+#' @param type File type used to save ‘x’ to disk. Must be one of "rds", or "qs" (default is "rds")
 #' @return log_note
 #' @keywords internal
 dplognote_get <- function(data_object, project_path) {
-  dataobj_path <- glue::glue(
-    "{project_path}/",
-    "output_files/RDS_format/data_object.RDS"
-  )
+  format <- ifelse(type == 'qs', 'qs_format', 'RDS_format')
+  dataobj_path <- glue::glue("{project_path}/output_files/{format}/data_object.{format}")
+
+
   attrs <- purrr::list_modify(attributes(data_object), names = purrr::zap())
   rds_file_sha1 <- digest::digest(object = dataobj_path, algo = "sha1", file = T)
 
